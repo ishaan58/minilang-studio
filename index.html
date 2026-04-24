@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>MiniLang Studio</title>
+  <link rel="stylesheet" href="css/styles.css"/>
+</head>
+<body>
+
+<!-- ── AUTH ── -->
+<div id="auth">
+  <div class="auth-card">
+    <div class="brand"><div class="dot"></div>MiniLang Studio</div>
+
+    <div id="aLogin">
+      <div class="auth-h">Welcome back</div>
+      <div class="auth-sub">Sign in to your account to continue coding.</div>
+      <div id="lerr" class="err-box" style="display:none"></div>
+      <div class="field">
+        <label>Email</label>
+        <input id="lemail" type="email" value="demo@minilang.dev" placeholder="you@example.com"/>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="lpass" type="password" value="demo1234" placeholder="••••••••"/>
+      </div>
+      <button class="auth-btn" onclick="doLogin()">Sign in</button>
+      <div class="divider">or</div>
+      <div class="demo-box">
+        <strong>Demo account</strong> · pre-filled above<br>
+        <button onclick="prefill()">Auto-fill demo credentials</button>
+      </div>
+      <div class="switch">No account? <span onclick="toSignup()">Create one free</span></div>
+    </div>
+
+    <div id="aSignup" style="display:none">
+      <div class="auth-h">Create account</div>
+      <div class="auth-sub">Join MiniLang Studio and start building real programs today.</div>
+      <div id="serr" class="err-box" style="display:none"></div>
+      <div class="field"><label>Your name</label><input id="sname" type="text" placeholder="Alice"/></div>
+      <div class="field"><label>Email</label><input id="semail" type="email" placeholder="you@example.com"/></div>
+      <div class="field"><label>Password</label><input id="spass" type="password" placeholder="At least 6 characters"/></div>
+      <button class="auth-btn" onclick="doSignup()">Create account</button>
+      <div class="switch">Have an account? <span onclick="toLogin()">Sign in</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ONBOARD ── -->
+<div id="onboard">
+  <div class="ob-card">
+    <div class="ob-prog"><div class="ob-bar" id="obBar" style="width:20%"></div></div>
+    <div class="ob-body" id="obBody"></div>
+    <div class="ob-foot">
+      <div class="ob-dots" id="obDots"></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="ob-skip" onclick="skipOb()">Skip tour</span>
+        <button class="ob-back" id="obBack" onclick="obPrev()">Back</button>
+        <button class="ob-next" id="obNext" onclick="obNext()">Next →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOP BAR ── -->
+<div id="topbar">
+  <div class="logo"><div class="ldot"></div>MiniLang Studio</div>
+  <div id="nav">
+    <button class="nb on" onclick="view('e')">Editor</button>
+    <button class="nb"    onclick="view('t')">Tutorials</button>
+    <button class="nb"    onclick="view('h')">History</button>
+  </div>
+  <div id="umenu">
+    <div class="avatar" id="av">?</div>
+    <span class="uname" id="uname"></span>
+    <button id="lout" onclick="doLogout()">Sign out</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app" style="display:none;flex">
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sb-hd">Projects</div>
+    <div id="plist"></div>
+    <div class="sb-new"><button onclick="newProjModal()">+ New project</button></div>
+  </div>
+
+  <!-- Workspace (Editor view) -->
+  <div id="ws">
+    <div id="ebar">
+      <span id="fname">main.ml</span>
+      <span id="unsaved">● unsaved</span>
+      <button id="runbtn" onclick="runCode()"><span class="tri"></span> Run</button>
+    </div>
+    <div id="ewrap">
+      <div id="lnums"><div id="lni">1</div></div>
+      <textarea
+        id="editor"
+        spellcheck="false"
+        oninput="onEdit()"
+        onscroll="syncScroll()"
+        onkeydown="handleKey(event)"
+      ></textarea>
+    </div>
+    <div id="console">
+      <div id="ctabs">
+        <div class="ctab on" onclick="ctab('o')">Output</div>
+        <div class="ctab"    onclick="ctab('t')">Execution trace</div>
+      </div>
+      <div id="cbody"><div class="l-info">Press Run or Ctrl+Enter to execute.</div></div>
+    </div>
+  </div>
+
+  <!-- Tutorial view -->
+  <div id="tv">
+    <h2>Tutorials</h2>
+    <div class="tv-sub">Six guided lessons from variables to lists. Click "Try it" to load into the editor.</div>
+  </div>
+
+  <!-- History view -->
+  <div id="hv">
+    <h2>Execution history</h2>
+    <div id="hlist"></div>
+  </div>
+
+  <!-- New project modal -->
+  <div id="modal">
+    <div id="mbox">
+      <h3>New project</h3>
+      <input id="pname" placeholder="Project name…"/>
+      <div class="mb">
+        <button id="mc" onclick="closeM()">Cancel</button>
+        <button id="mo" onclick="createProj()">Create</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Scripts: load order matters -->
+<script src="js/db.js"></script>
+<script src="js/samples.js"></script>
+<script src="js/interpreter.js"></script>
+<script src="js/editor.js"></script>
+<script src="js/console.js"></script>
+<script src="js/projects.js"></script>
+<script src="js/views.js"></script>
+<script src="js/onboard.js"></script>
+<script src="js/auth.js"></script>
+<script>
+  // Keyboard shortcut bindings for auth inputs
+  document.getElementById('pname')?.addEventListener('keydown', e => { if (e.key === 'Enter') createProj(); });
+  document.getElementById('lpass')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+  document.getElementById('spass')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+</script>
+</body>
+</html>
