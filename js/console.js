@@ -1,19 +1,22 @@
-// ══ CONSOLE ══
-let lastTrace = [], curTab = 'o';
+import { AppState } from './state.js';
+import { DB } from './db.js';
+import { esc } from './utils.js';
 
-function clearCon() {
+// ══ CONSOLE ══
+
+export function clearCon() {
   document.getElementById('cbody').innerHTML = '<div class="l-info">Ready. Press Run to execute.</div>';
 }
 
-function ctab(t) {
-  curTab = t;
+export function ctab(t) {
+  AppState.curTab = t;
   document.querySelectorAll('.ctab').forEach((el, i) =>
     el.classList.toggle('on', (i === 0 && t === 'o') || (i === 1 && t === 't'))
   );
   if (t === 'o') renderOut(null); else renderTrace();
 }
 
-function renderOut(r) {
+export function renderOut(r) {
   if (!r) { clearCon(); return; }
   let h = `<div class="l-info">▶ Ran in ${r.dur}ms</div>`;
   r.output.forEach(l  => { h += `<div class="l-ok">${esc(l)}</div>`; });
@@ -22,22 +25,18 @@ function renderOut(r) {
   document.getElementById('cbody').innerHTML = h;
 }
 
-function renderTrace() {
-  if (!lastTrace.length) {
+export function renderTrace() {
+  if (!AppState.lastTrace.length) {
     document.getElementById('cbody').innerHTML = '<div class="l-info">Run code first.</div>';
     return;
   }
-  document.getElementById('cbody').innerHTML = lastTrace.slice(0, 150).map((s, i) =>
+  document.getElementById('cbody').innerHTML = AppState.lastTrace.slice(0, 150).map((s, i) =>
     `<div class="l-step">${i + 1} &nbsp;L${s.line} &nbsp;${esc(s.description)}</div>`
   ).join('');
 }
 
-function esc(s) {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
 // ══ RUN ══
-function runCode() {
+export function runCode() {
   const code = document.getElementById('editor').value;
   if (!code.trim()) return;
 
@@ -45,25 +44,28 @@ function runCode() {
   btn.innerHTML = '⟳ Running…';
   btn.style.background = '#16a34a';
 
-  setTimeout(() => {
+  setTimeout(async () => {
+    // Dynamic import to avoid circular dependency if interpreter imports from global,
+    // though here interpreter is pure
+    const { interpret } = window; // interpreter.js sets this globally for now, or we can assume it's loaded
     const r = interpret(code);
-    lastTrace = r.steps || [];
+    AppState.lastTrace = r.steps || [];
 
-    if (curTab === 'o') renderOut(r); else renderTrace();
+    if (AppState.curTab === 'o') renderOut(r); else renderTrace();
 
-    if (CU && curP) {
-      curP.code = code;
+    if (AppState.CU && AppState.curP) {
+      AppState.curP.code = code;
       document.getElementById('unsaved').style.display = 'none';
-      DB.saveProjs(CU.id, projs);
-      const h = DB.hist(CU.id);
-      h.unshift({
-        id: Date.now(), proj: curP.name,
+      await DB.saveProj(AppState.CU.uid, AppState.curP);
+      
+      const entry = {
+        proj: AppState.curP.name,
         code: code.slice(0, 250),
         out: r.output.join('\n').slice(0, 150),
         err: r.errors,
         t: new Date().toISOString(),
-      });
-      DB.saveHist(CU.id, h);
+      };
+      await DB.addHist(AppState.CU.uid, entry);
     }
 
     btn.innerHTML = '<span class="tri"></span> Run';

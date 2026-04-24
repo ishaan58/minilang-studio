@@ -1,24 +1,27 @@
+import { AppState } from './state.js';
+import { runCode } from './console.js';
+
 // ══ EDITOR ══
-function onEdit() {
-  if (curP) {
+export function onEdit() {
+  if (AppState.curP) {
     document.getElementById('unsaved').style.display = 'inline';
-    curP.code = document.getElementById('editor').value;
+    AppState.curP.code = document.getElementById('editor').value;
   }
   updateLnums();
 }
 
-function updateLnums() {
+export function updateLnums() {
   const ls = (document.getElementById('editor').value || '').split('\n');
   document.getElementById('lni').innerHTML = ls.map((_, i) =>
     `<div style="height:20.8px;line-height:1.6">${i + 1}</div>`
   ).join('');
 }
 
-function syncScroll() {
+export function syncScroll() {
   document.getElementById('lnums').scrollTop = document.getElementById('editor').scrollTop;
 }
 
-function handleKey(e) {
+export function handleKey(e) {
   const ta = e.target;
 
   if (e.key === 'Tab') {

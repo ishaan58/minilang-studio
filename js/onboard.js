@@ -1,3 +1,6 @@
+import { AppState } from './state.js';
+import { DB } from './db.js';
+
 // ══ ONBOARD ══
 const OBS = [
   {
@@ -30,13 +33,13 @@ const OBS = [
 
 let obI = 0;
 
-function startOb() {
+export function startOb() {
   obI = 0;
   renderOb();
   document.getElementById('onboard').style.display = 'flex';
 }
 
-function renderOb() {
+export function renderOb() {
   const s = OBS[obI], total = OBS.length;
   document.getElementById('obBar').style.width    = ((obI + 1) / total * 100) + '%';
   document.getElementById('obBack').style.visibility = obI === 0 ? 'hidden' : 'visible';
@@ -49,9 +52,9 @@ function renderOb() {
   document.getElementById('obBody').innerHTML = h;
 }
 
-function obNext() { if (obI < OBS.length - 1) { obI++; renderOb(); } else skipOb(); }
-function obPrev() { if (obI > 0) { obI--; renderOb(); } }
-function skipOb() {
+export function obNext() { if (obI < OBS.length - 1) { obI++; renderOb(); } else skipOb(); }
+export function obPrev() { if (obI > 0) { obI--; renderOb(); } }
+export async function skipOb() {
   document.getElementById('onboard').style.display = 'none';
-  if (CU) DB.setOb(CU.id);
+  if (AppState.CU) await DB.setOb(AppState.CU.uid);
 }

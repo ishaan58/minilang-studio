@@ -1,15 +1,34 @@
+import { AppState } from './state.js';
+import { DB } from './db.js';
+import { esc } from './utils.js';
+import { renderProjs, loadProjs } from './projects.js';
+import { updateLnums } from './editor.js';
+
 // ══ VIEWS ══
-function view(v) {
+export function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const ov = document.getElementById('sbOverlay');
+  sb.classList.toggle('open');
+  ov.classList.toggle('on');
+}
+
+export function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sbOverlay').classList.remove('on');
+}
+
+export function view(v) {
   document.querySelectorAll('.nb').forEach((b, i) => b.classList.toggle('on', ['e', 't', 'h'][i] === v));
   document.getElementById('sidebar').style.display = v === 'e' ? 'flex'  : 'none';
   document.getElementById('ws').style.display      = v === 'e' ? 'flex'  : 'none';
   document.getElementById('tv').style.display      = v === 't' ? 'block' : 'none';
   document.getElementById('hv').style.display      = v === 'h' ? 'block' : 'none';
   if (v === 'h') renderHist();
+  closeSidebar();
 }
 
 // ══ HISTORY ══
-function ago(iso) {
+export function ago(iso) {
   const d = Date.now() - new Date(iso).getTime();
   if (d < 60000)    return 'just now';
   if (d < 3600000)  return Math.floor(d / 60000)   + 'm ago';
@@ -17,8 +36,8 @@ function ago(iso) {
   return Math.floor(d / 86400000) + 'd ago';
 }
 
-function renderHist() {
-  const h  = CU ? DB.hist(CU.id) : [];
+export async function renderHist() {
+  const h  = AppState.CU ? await DB.hist(AppState.CU.uid) : [];
   const el = document.getElementById('hlist');
   if (!h.length) {
     el.innerHTML = '<div style="color:#71717a;font-size:13px;">No history yet — run some code!</div>';
@@ -76,7 +95,7 @@ const TUTS = [
   },
 ];
 
-function renderTuts() {
+export function renderTuts() {
   const el = document.getElementById('tv');
   if (el.querySelectorAll('.lesson').length) return;
   TUTS.forEach((t, i) => {
@@ -87,17 +106,19 @@ function renderTuts() {
   });
 }
 
-function loadTut(i) {
+export async function loadTut(i) {
   const t = TUTS[i];
-  if (!curP) {
+  if (!AppState.curP) {
     const p = { id: 'p' + Date.now(), name: t.t, code: t.s, created: new Date().toISOString() };
-    projs.unshift(p);
-    curP = p;
-    DB.saveProjs(CU.id, projs);
+    AppState.projs.unshift(p);
+    AppState.curP = p;
+    if (AppState.CU) {
+      await DB.saveProj(AppState.CU.uid, p);
+    }
     renderProjs();
   }
   document.getElementById('editor').value = t.s;
-  if (curP) curP.code = t.s;
+  if (AppState.curP) AppState.curP.code = t.s;
   updateLnums();
   view('e');
 }

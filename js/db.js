@@ -1,14 +1,55 @@
-// ══ DB (localStorage) ══
-const DB = {
-  users()          { try { return JSON.parse(localStorage.getItem('ml_u') || '[]') } catch { return [] } },
-  saveUsers(u)     { localStorage.setItem('ml_u', JSON.stringify(u)) },
-  sess()           { try { return JSON.parse(localStorage.getItem('ml_s') || 'null') } catch { return null } },
-  saveSess(s)      { localStorage.setItem('ml_s', JSON.stringify(s)) },
-  clearSess()      { localStorage.removeItem('ml_s') },
-  projs(id)        { try { return JSON.parse(localStorage.getItem('ml_p_' + id) || '[]') } catch { return [] } },
-  saveProjs(id, p) { localStorage.setItem('ml_p_' + id, JSON.stringify(p)) },
-  hist(id)         { try { return JSON.parse(localStorage.getItem('ml_h_' + id) || '[]') } catch { return [] } },
-  saveHist(id, h)  { localStorage.setItem('ml_h_' + id, JSON.stringify(h.slice(0, 50))) },
-  ob(id)           { return localStorage.getItem('ml_ob_' + id) === '1' },
-  setOb(id)        { localStorage.setItem('ml_ob_' + id, '1') },
+import { db } from './firebase-config.js';
+import { collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, addDoc, query, orderBy, limit } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js';
+
+// ══ DB (Firestore) ══
+export const DB = {
+  async ensureUser(uid, name, email) {
+    const ref = doc(db, 'users', uid);
+    const d = await getDoc(ref);
+    if (!d.exists()) {
+      await setDoc(ref, {
+        name,
+        email,
+        created: new Date().toISOString(),
+        onboarded: false
+      }, { merge: true });
+    }
+  },
+
+  async ob(uid) {
+    const ref = doc(db, 'users', uid);
+    const d = await getDoc(ref);
+    return d.exists() && d.data().onboarded;
+  },
+
+  async setOb(uid) {
+    const ref = doc(db, 'users', uid);
+    await updateDoc(ref, { onboarded: true });
+  },
+
+  async projs(uid) {
+    const q = query(collection(db, `users/${uid}/projects`), orderBy('created', 'desc'));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  async saveProj(uid, p) {
+    // p contains id, name, code, created
+    const { id, ...data } = p;
+    await setDoc(doc(db, `users/${uid}/projects`, id), data);
+  },
+
+  async deleteProj(uid, id) {
+    await deleteDoc(doc(db, `users/${uid}/projects`, id));
+  },
+
+  async hist(uid) {
+    const q = query(collection(db, `users/${uid}/history`), orderBy('t', 'desc'), limit(50));
+    const snap = await getDocs(q);
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  },
+
+  async addHist(uid, entry) {
+    await addDoc(collection(db, `users/${uid}/history`), entry);
+  }
 };

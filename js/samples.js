@@ -1,4 +1,8 @@
 // ══ SAMPLE PROGRAMS ══
+// These are available globally for the interpreter/editor to reference.
+// With Firebase, demo seeding is handled server-side (Firebase console)
+// and new-user projects are created in auth.js on signup.
+
 const SAMPLES = {
   'Hello World': `# Welcome to MiniLang Studio!\nlet name = "World"\nprint("Hello, " + name + "!")\nprint("This runs entirely in your browser.")\n\n# Try changing 'World' to your name!`,
 
@@ -10,17 +14,3 @@ const SAMPLES = {
 
   'Functions': `# Functions & recursion\nfunc factorial(n):\n  if n <= 1:\n    return 1\n  return n * factorial(n - 1)\n\nfunc isPrime(n):\n  if n < 2:\n    return false\n  let i = 2\n  while i * i <= n:\n    if n % i == 0:\n      return false\n    i = i + 1\n  return true\n\nlet i = 1\nwhile i <= 8:\n  print(str(i) + "! = " + str(factorial(i)))\n  i = i + 1\n\nprint("\\nPrimes up to 30:")\nlet n = 2\nwhile n <= 30:\n  if isPrime(n):\n    print(n)\n  n = n + 1`,
 };
-
-// Seed demo account on first load
-(function seedDemo() {
-  let u = DB.users();
-  if (!u.find(x => x.email === 'demo@minilang.dev')) {
-    u.push({ id: 'demo', name: 'Demo User', email: 'demo@minilang.dev', password: 'demo1234', created: new Date().toISOString() });
-    DB.saveUsers(u);
-  }
-  if (DB.projs('demo').length === 0) {
-    DB.saveProjs('demo', Object.entries(SAMPLES).map(([n, c], i) => ({
-      id: 'd' + i, name: n, code: c, created: new Date().toISOString()
-    })));
-  }
-})();

@@ -1,36 +1,53 @@
-// ══ AUTH ══
-let CU = null;
+import { auth } from './firebase-config.js';
+import { DB } from './db.js';
+import { AppState } from './state.js';
+import { loadProjs } from './projects.js';
+import { renderTuts } from './views.js';
+import { startOb } from './onboard.js';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js';
 
-function toLogin() {
+// ══ AUTH ══
+
+export function toLogin() {
   document.getElementById('aLogin').style.display = 'block';
   document.getElementById('aSignup').style.display = 'none';
 }
 
-function toSignup() {
+export function toSignup() {
   document.getElementById('aLogin').style.display = 'none';
   document.getElementById('aSignup').style.display = 'block';
 }
 
-function prefill() {
+export function prefill() {
   document.getElementById('lemail').value = 'demo@minilang.dev';
   document.getElementById('lpass').value = 'demo1234';
 }
 
-function doLogin() {
+export async function doLogin() {
   const e = document.getElementById('lemail').value.trim();
   const p = document.getElementById('lpass').value;
-  const u = DB.users().find(x => x.email === e);
-  if (!u || u.password !== p) {
-    const el = document.getElementById('lerr');
+  const el = document.getElementById('lerr');
+  
+  try {
+    const btn = document.querySelector('#aLogin .auth-btn');
+    const oldText = btn.textContent;
+    btn.textContent = 'Signing in...';
+    btn.disabled = true;
+    
+    await signInWithEmailAndPassword(auth, e, p);
+    
+    btn.textContent = oldText;
+    btn.disabled = false;
+  } catch (err) {
+    const btn = document.querySelector('#aLogin .auth-btn');
+    btn.textContent = 'Sign in';
+    btn.disabled = false;
     el.textContent = 'Invalid email or password.';
     el.style.display = 'block';
-    return;
   }
-  DB.saveSess({ id: u.id, name: u.name, email: u.email });
-  boot(u);
 }
 
-function doSignup() {
+export async function doSignup() {
   const n  = document.getElementById('sname').value.trim();
   const e  = document.getElementById('semail').value.trim();
   const p  = document.getElementById('spass').value;
@@ -39,48 +56,79 @@ function doSignup() {
   if (!n || !e || !p) { el.textContent = 'All fields required.'; el.style.display = 'block'; return; }
   if (p.length < 6)   { el.textContent = 'Password must be at least 6 characters.'; el.style.display = 'block'; return; }
 
-  const u = DB.users();
-  if (u.find(x => x.email === e)) { el.textContent = 'Email already registered.'; el.style.display = 'block'; return; }
+  try {
+    const btn = document.querySelector('#aSignup .auth-btn');
+    const oldText = btn.textContent;
+    btn.textContent = 'Creating account...';
+    btn.disabled = true;
 
-  const nu = { id: 'u' + Date.now(), name: n, email: e, password: p, created: new Date().toISOString() };
-  u.push(nu);
-  DB.saveUsers(u);
-  DB.saveProjs(nu.id, [{
-    id: 'p0', name: 'Hello World',
-    code: `# ${n}'s first program\nlet name = "${n}"\nprint("Hello, " + name + "!")\nprint("Welcome to MiniLang Studio!")\n`,
-    created: new Date().toISOString()
-  }]);
-  DB.saveSess({ id: nu.id, name: nu.name, email: nu.email });
-  boot(nu);
+    const cred = await createUserWithEmailAndPassword(auth, e, p);
+    const user = cred.user;
+    
+    await DB.ensureUser(user.uid, n, e);
+    await DB.saveProj(user.uid, {
+      id: 'p0',
+      name: 'Hello World',
+      code: `# ${n}'s first program\nlet name = "${n}"\nprint("Hello, " + name + "!")\nprint("Welcome to MiniLang Studio!")\n`,
+      created: new Date().toISOString()
+    });
+
+    btn.textContent = oldText;
+    btn.disabled = false;
+  } catch (err) {
+    const btn = document.querySelector('#aSignup .auth-btn');
+    btn.textContent = 'Create account';
+    btn.disabled = false;
+    
+    if (err.code === 'auth/email-already-in-use') {
+      el.textContent = 'Email already registered.';
+    } else {
+      el.textContent = err.message;
+    }
+    el.style.display = 'block';
+  }
 }
 
-function doLogout() {
-  DB.clearSess();
-  CU = null;
-  document.getElementById('auth').style.display    = 'flex';
-  document.getElementById('topbar').style.display  = 'none';
-  document.getElementById('app').style.display     = 'none';
-  document.getElementById('onboard').style.display = 'none';
-  document.getElementById('lpass').value = '';
+export async function doLogout() {
+  await signOut(auth);
 }
 
-function boot(u) {
-  CU = u;
+export async function boot(userRecord) {
+  AppState.CU = userRecord;
   document.getElementById('auth').style.display   = 'none';
   document.getElementById('topbar').style.display = 'flex';
   document.getElementById('app').style.display    = 'flex';
-  document.getElementById('uname').textContent    = u.name.split(' ')[0];
-  document.getElementById('av').textContent       = u.name[0].toUpperCase();
-  loadProjs();
+  document.getElementById('uname').textContent    = userRecord.name.split(' ')[0];
+  document.getElementById('av').textContent       = userRecord.name[0].toUpperCase();
+  
+  await loadProjs();
   renderTuts();
-  if (!DB.ob(u.id)) startOb();
+  
+  const onboarded = await DB.ob(userRecord.uid);
+  if (!onboarded) startOb();
 }
 
-// Auto-login from stored session
-(function autoLogin() {
-  const s = DB.sess();
-  if (s) {
-    const u = DB.users().find(x => x.id === s.id);
-    if (u) setTimeout(() => boot(u), 80);
+// Global auth listener
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    // User is signed in
+    import('./firebase-config.js').then(async ({ db }) => {
+      const { doc, getDoc } = await import('https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js');
+      const docSnap = await getDoc(doc(db, 'users', user.uid));
+      let name = user.email.split('@')[0];
+      if (docSnap.exists()) {
+        name = docSnap.data().name || name;
+      }
+      boot({ uid: user.uid, name, email: user.email });
+    });
+  } else {
+    // User is signed out
+    AppState.CU = null;
+    document.getElementById('auth').style.display    = 'flex';
+    document.getElementById('topbar').style.display  = 'none';
+    document.getElementById('app').style.display     = 'none';
+    document.getElementById('onboard').style.display = 'none';
+    const lpass = document.getElementById('lpass');
+    if(lpass) lpass.value = '';
   }
-})();
+});

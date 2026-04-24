@@ -193,6 +193,7 @@ code, pre, textarea, #editor, #lnums, .lcode, .ob-code, .hi-code {
 #app {
   display: none; flex: 1; overflow: hidden;
   height: calc(100vh - 46px);
+  height: calc(100dvh - 46px);
 }
 
 #sidebar {
@@ -353,3 +354,184 @@ code, pre, textarea, #editor, #lnums, .lcode, .ob-code, .hi-code {
 .mb button  { padding: 6px 14px; border-radius: var(--rad); font-size: 13px; cursor: pointer; }
 #mc { border: 1px solid var(--brd); background: transparent; color: var(--txt2); }
 #mo { border: none; background: var(--acc); color: #fff; font-weight: 600; }
+
+
+/* ── MOBILE SIDEBAR TOGGLE ── */
+#sbToggle {
+  display: none;
+  align-items: center; justify-content: center;
+  width: 34px; height: 34px;
+  border-radius: var(--rad); border: 1px solid var(--brd);
+  background: transparent; color: var(--txt2);
+  font-size: 18px; cursor: pointer; flex-shrink: 0;
+  transition: .15s;
+}
+#sbToggle:hover { background: var(--surf2); color: var(--txt); }
+
+/* Sidebar overlay backdrop (mobile only) */
+#sbOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 19;
+  background: rgba(0,0,0,.5); backdrop-filter: blur(2px);
+}
+#sbOverlay.on { display: block; }
+
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — TABLET (≤ 768px)
+   ══════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Top bar: show hamburger, shrink nav */
+  #sbToggle { display: flex; }
+
+  #topbar { gap: 6px; padding: 0 10px; height: 44px; }
+  .logo   { font-size: 13px; gap: 6px; }
+  .ldot   { width: 8px; height: 8px; }
+
+  #nav { gap: 1px; margin-left: auto; }
+  .nb  { padding: 4px 8px; font-size: 12px; }
+
+  #umenu { margin-left: 4px; padding-left: 6px; }
+  .uname { display: none; }
+  #lout  { padding: 3px 8px; font-size: 11px; }
+
+  /* Sidebar: slide-out overlay on mobile */
+  #sidebar {
+    position: fixed; top: 44px; left: 0; bottom: 0;
+    width: 240px; z-index: 20;
+    transform: translateX(-100%);
+    transition: transform .25s ease;
+    box-shadow: 4px 0 24px rgba(0,0,0,.4);
+  }
+  #sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* App layout: single column */
+  #app { height: calc(100vh - 44px); height: calc(100dvh - 44px); }
+
+  /* Editor bar */
+  #ebar { padding: 6px 10px; }
+  #fname { font-size: 11px; }
+  #runbtn { padding: 5px 10px; font-size: 12px; gap: 4px; }
+
+  /* Line numbers narrower */
+  #lnums { width: 34px; }
+  #lni   { padding-right: 5px; }
+  #editor { padding: 10px; font-size: 12px; }
+
+  /* Console shorter */
+  #console { height: 140px; }
+  .ctab    { padding: 6px 10px; font-size: 11px; }
+  #cbody   { padding: 6px 10px; font-size: 11px; }
+
+  /* Tutorial view */
+  #tv { padding: 18px 16px; }
+  #tv h2 { font-size: 18px; }
+  .lesson { padding: 14px 16px; }
+  .lesson h3 { font-size: 14px; }
+  .lb    { font-size: 12px; }
+  .lcode { font-size: 11px; padding: 10px 12px; }
+
+  /* History view */
+  #hv { padding: 16px 14px; }
+  #hv h2 { font-size: 16px; }
+  .hi { padding: 8px 12px; }
+
+  /* Auth card */
+  .auth-card { width: 90vw; max-width: 380px; padding: 24px; }
+  .auth-h    { font-size: 20px; }
+
+  /* Onboard card */
+  .ob-card { width: 90vw; max-width: 520px; }
+  .ob-body { padding: 22px; }
+  .ob-title { font-size: 18px; }
+
+  /* Modal */
+  #mbox { width: 85vw; max-width: 300px; }
+}
+
+
+/* ══════════════════════════════════════════
+   RESPONSIVE — PHONE (≤ 480px)
+   ══════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  /* Topbar: tighter */
+  #topbar { height: 42px; padding: 0 8px; }
+  .logo   { font-size: 12px; }
+
+  /* Nav buttons even smaller */
+  .nb { padding: 4px 6px; font-size: 11px; }
+
+  /* Hide avatar on very small screens */
+  .avatar { display: none; }
+  #lout   { font-size: 10px; padding: 3px 6px; }
+
+  /* Sidebar wider on phone */
+  #sidebar { top: 42px; width: 220px; }
+
+  /* App height */
+  #app { height: calc(100vh - 42px); height: calc(100dvh - 42px); }
+
+  /* Editor: maximize space */
+  #lnums  { width: 28px; font-size: 10px; }
+  #editor { padding: 8px; font-size: 11px; line-height: 1.5; }
+  #ebar   { padding: 5px 8px; gap: 4px; }
+  #fname  { font-size: 10px; }
+  #unsaved{ font-size: 9px; }
+  #runbtn { padding: 4px 8px; font-size: 11px; }
+  .tri    { border-left-width: 6px; border-top-width: 3px; border-bottom-width: 3px; }
+
+  /* Console even shorter */
+  #console { height: 120px; }
+  .ctab    { padding: 5px 8px; font-size: 10px; }
+  #cbody   { font-size: 10px; line-height: 1.6; }
+
+  /* Auth card: full width */
+  .auth-card {
+    width: 95vw; max-width: none;
+    padding: 20px; border-radius: var(--rad);
+  }
+  .brand   { font-size: 15px; margin-bottom: 20px; }
+  .auth-h  { font-size: 18px; }
+  .auth-sub{ font-size: 12px; }
+  .field input { padding: 8px 10px; font-size: 13px; }
+  .auth-btn { padding: 9px; font-size: 13px; }
+  .demo-box { font-size: 11px; }
+  .switch   { font-size: 12px; }
+
+  /* Onboard card */
+  .ob-card   { width: 95vw; max-width: none; }
+  .ob-body   { padding: 18px; }
+  .ob-title  { font-size: 16px; }
+  .ob-desc   { font-size: 13px; }
+  .ob-code   { font-size: 11px; padding: 10px; }
+  .ob-pill   { font-size: 11px; padding: 4px 10px; }
+  .ob-foot   { padding: 10px 14px; }
+  .ob-back, .ob-next { font-size: 12px; padding: 5px 12px; }
+
+  /* Tutorial & History */
+  #tv     { padding: 14px 12px; }
+  #tv h2  { font-size: 16px; }
+  .tv-sub { font-size: 12px; }
+  .lesson { padding: 12px; margin-bottom: 10px; }
+  .lesson h3 { font-size: 13px; gap: 6px; }
+  .ln { width: 20px; height: 20px; font-size: 10px; }
+  .lb { font-size: 11px; }
+  .lcode { font-size: 10px; padding: 8px 10px; }
+  .try-btn { font-size: 11px; padding: 4px 10px; }
+
+  #hv    { padding: 14px 12px; }
+  #hv h2 { font-size: 15px; }
+  .hi    { padding: 8px 10px; margin-bottom: 6px; }
+  .hi-m  { font-size: 10px; }
+  .hi-c  { font-size: 10px; max-height: 32px; }
+
+  /* Modal */
+  #mbox { width: 90vw; padding: 18px; }
+  #mbox h3 { font-size: 14px; }
+  #mbox input { font-size: 12px; padding: 7px 10px; }
+  .mb button { padding: 5px 12px; font-size: 12px; }
+}

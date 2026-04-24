@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
   <title>MiniLang Studio</title>
   <link rel="stylesheet" href="css/styles.css"/>
 </head>
@@ -65,6 +65,7 @@
 
 <!-- ── TOP BAR ── -->
 <div id="topbar">
+  <button id="sbToggle" onclick="toggleSidebar()" aria-label="Toggle sidebar">☰</button>
   <div class="logo"><div class="ldot"></div>MiniLang Studio</div>
   <div id="nav">
     <button class="nb on" onclick="view('e')">Editor</button>
@@ -80,6 +81,9 @@
 
 <!-- ── APP ── -->
 <div id="app" style="display:none;flex">
+
+  <!-- Sidebar overlay (mobile) -->
+  <div id="sbOverlay" onclick="toggleSidebar()"></div>
 
   <!-- Sidebar -->
   <div id="sidebar">
@@ -140,21 +144,21 @@
 
 </div>
 
-<!-- Scripts: load order matters -->
-<script src="js/db.js"></script>
+<!-- Global scripts -->
 <script src="js/samples.js"></script>
 <script src="js/interpreter.js"></script>
-<script src="js/editor.js"></script>
-<script src="js/console.js"></script>
-<script src="js/projects.js"></script>
-<script src="js/views.js"></script>
-<script src="js/onboard.js"></script>
-<script src="js/auth.js"></script>
+
+<!-- Main entry point -->
+<script type="module" src="js/main.js"></script>
+
 <script>
   // Keyboard shortcut bindings for auth inputs
-  document.getElementById('pname')?.addEventListener('keydown', e => { if (e.key === 'Enter') createProj(); });
-  document.getElementById('lpass')?.addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-  document.getElementById('spass')?.addEventListener('keydown', e => { if (e.key === 'Enter') doSignup(); });
+  // Need to wait for DOM to be ready, these will execute before modules though
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('pname')?.addEventListener('keydown', e => { if (e.key === 'Enter' && window.createProj) window.createProj(); });
+    document.getElementById('lpass')?.addEventListener('keydown', e => { if (e.key === 'Enter' && window.doLogin) window.doLogin(); });
+    document.getElementById('spass')?.addEventListener('keydown', e => { if (e.key === 'Enter' && window.doSignup) window.doSignup(); });
+  });
 </script>
 </body>
 </html>
